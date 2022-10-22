@@ -3,8 +3,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Raduz.KafkaClient.Common.Extensions
 {
+	/// <summary>
+	/// Logging extensions
+	/// </summary>
 	public static class SystemLogExtensions
 	{
+		/// <summary>
+		/// Change kafka specific log level to microsoft log level
+		/// </summary>
+		/// <param name="syslogLevel"></param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentOutOfRangeException"></exception>
 		public static LogLevel ToLogLevel(this SyslogLevel syslogLevel)
 		{
 			switch (syslogLevel)

@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 
 namespace Raduz.KafkaClient.Contracts.Requests
 {
+	/// <summary>
+	/// Kafka client request inerface
+	/// </summary>
 	public interface IKafkaClientRequest : IRequest<bool>
 	{
 	}

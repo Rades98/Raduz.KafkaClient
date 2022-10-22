@@ -1,8 +1,11 @@
 ﻿using Avro.Specific;
-using MediatR;
 
 namespace Raduz.KafkaClient.Contracts.Requests
 {
+	/// <summary>
+	/// Kafka client request
+	/// </summary>
+	/// <typeparam name="T">AVRO specific record <seealso cref="ISpecificRecord"/></typeparam>
 	public abstract class KafkaClientRequest<T> : IKafkaClientRequest where T : ISpecificRecord
 	{
 		public KafkaClientRequest(T specificRecord)
@@ -10,6 +13,9 @@ namespace Raduz.KafkaClient.Contracts.Requests
 			RequestValue = specificRecord;
 		}
 
+		/// <summary>
+		/// Value of kafka consumed message
+		/// </summary>
 		public T RequestValue { get; }
 	}
 }

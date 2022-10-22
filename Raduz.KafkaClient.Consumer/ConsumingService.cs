@@ -18,7 +18,7 @@ namespace Raduz.KafkaClient.Consumer
 		private readonly ConsumerConfig _consumerConfig;
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
 		private readonly IMediator _mediator;
-		private readonly KafkaConsumerCollections _kafkaClientOptions;
+		private readonly KafkaConsumerCollection _kafkaClientOptions;
 
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
@@ -27,7 +27,7 @@ namespace Raduz.KafkaClient.Consumer
 			IOptions<ConsumerConfig> consumerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
 			IMediator mediator,
-			KafkaConsumerCollections kafkaClientOptions)
+			KafkaConsumerCollection kafkaClientOptions)
 		{
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_consumerConfig = consumerConfig.Value ?? throw new ArgumentNullException(nameof(consumerConfig));

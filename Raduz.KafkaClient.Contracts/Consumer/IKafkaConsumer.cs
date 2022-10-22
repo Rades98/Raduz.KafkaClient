@@ -3,6 +3,9 @@ using Raduz.KafkaClient.Contracts.Requests;
 
 namespace Raduz.KafkaClient.Contracts.Consumer
 {
+	/// <summary>
+	/// Kafka consumer interface
+	/// </summary>
 	public interface IKafkaConsumer
 	{
 		string TopicName { get; }

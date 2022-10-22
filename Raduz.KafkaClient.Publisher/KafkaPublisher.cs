@@ -21,6 +21,7 @@ namespace Raduz.KafkaClient.Publisher
 			_schemaRegistryConfig = schemaRegistryConfig.Value ?? throw new ArgumentNullException(nameof(schemaRegistryConfig));
 		}
 
+		/// <inheritdoc/>
 		public async Task PublishAsync<T>(string topicName, string key, T data, CancellationToken ct)
 			where T : class, ISpecificRecord
 		{
