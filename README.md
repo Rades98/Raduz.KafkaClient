@@ -1,3 +1,5 @@
+![logo](https://user-images.githubusercontent.com/37796889/197366999-7aef1ddf-8bae-4859-b40f-3d0d9c542df4.png)
+
 # Raduz.KafkaClient
 Easy to use kafka .net6 client.
 + publishing and consuming AVRO schema based topics easilly with mediator request and handlers
