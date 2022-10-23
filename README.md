@@ -1,10 +1,14 @@
 # Raduz.KafkaClient
 Easy to use kafka .net6 client.
-+ publishing and consuming AVRO schema based topics easilly and fast with mediator request and handlers
++ publishing and consuming AVRO schema based topics easilly with mediator request and handlers
++ some logs of operations and their state
 
 # How to use
 You can download packages from [here](https://github.com/Rades98?tab=packages) 
 
+## AVRO object creation
+How to create AVROModel you can read [here](https://engineering.chrobinson.com/dotnet-avro/guides/cli-generate/)
++ !Dont forget to add its avsc file to your schema registry!
 
 ## Registration
 To use kafka client you have to register it in your DI container and provide configuration
@@ -42,6 +46,7 @@ Add this code snipet to your service registration.
    services.ConfigureKafkaPublisher(configuration)
       .ConfigureKafkaConsumer(configuration, opts =>
       {
+        //Here you can register consumer requests for specific topic and AVRO model
         opts.AddConsumer<{AVRO-SCHEME}, {MEDIATOR-REQUEST}>("{TOPIC-NAME}");
         ...
       })
@@ -50,6 +55,7 @@ Add this code snipet to your service registration.
 Here we need to create request and handler implementing kafka client interfaces and abstract class
 
 ### Request creation
+Creating request is realy easy, cause only thing that you need is just to create class implementing abstract class KafkaClientRequest and provide some generated object from your AVRO scheme
 ``` cs
 public class YourRequest : KafkaClientRequest<AVROModel>
 {
@@ -60,7 +66,7 @@ public class YourRequest : KafkaClientRequest<AVROModel>
 ```  
 
 ### Handler creation
-And now we need handler for our request.
+Handler should implement IKafkaClientRequestHandler where the generic argument is your created request
 ```  cs
 public class YourHandler : IKafkaClientRequestHandler<YourRequest>
 {
