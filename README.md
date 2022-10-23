@@ -27,13 +27,17 @@ How to create AVROModel you can read [here](https://engineering.chrobinson.com/d
 To use kafka client you have to register it in your DI container and provide configuration
 
 ### appsettings.json
-In app settings you can set consumer, producer and schema registry (at this point there is no common registration)
+In app settings you can set consumer, producer and schema registry (at this point there is no common registration). </br>All registration settings are made by Confluent.Kafka. You can read more in their documentation 
++ [ConsumerConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.Kafka.ConsumerConfig.html)
++ [ProducerrConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.Kafka.ProducerConfig.html)
++ [SchemaRegistryConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.SchemaRegistry.SchemaRegistryConfig.html)
+
 ``` json
 "ConsumerConfig": {
     "GroupId": "{CONSUMER-GROUP-ID}",
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
     "AutoOffsetReset" : 1,
-    //OPTIONAL
+    //OPTIONAL f.e.
     "SecurityProtocol": 3,
     "SaslMechanism": {SASL-MECHANISM},
     "SaslUsername": "{SASL-USER-NAME}",
@@ -41,12 +45,12 @@ In app settings you can set consumer, producer and schema registry (at this poin
   },
   "SchemaRegistryConfig": {
     "Url": "{SCHEMA-REGISTRY-URL}",
-    //OPTIONAL
+    //OPTIONAL f.e.
     "BasicAuthUserInfo": "{KEY}:{TOKEN}"
   },
   "ProducerConfig": {
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
-    //OPTIONAL
+    //OPTIONAL f.e.
     "SecurityProtocol": 3,
     "SaslMechanism": {SASL-MECHANISM},
     "SaslUsername": "{SASL-USER-NAME}",
