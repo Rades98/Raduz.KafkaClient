@@ -3,7 +3,7 @@
 namespace Raduz.KafkaClient.Contracts.Publisher
 {
 	/// <summary>
-	/// KAfka publisher interface
+	/// Kafka publisher interface
 	/// </summary>
 	public interface IKafkaPublisher
 	{

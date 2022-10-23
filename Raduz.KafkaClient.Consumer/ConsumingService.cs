@@ -12,7 +12,12 @@ using YCherkes.SchemaRegistry.Serdes.Avro;
 
 namespace Raduz.KafkaClient.Consumer
 {
-	internal class ConsumingService : BackgroundService
+	/// <summary>
+	/// Hosted service consuming kafka topics provided 
+	/// by registration and calling its handler 
+	/// by its request via MediatR
+	/// </summary>
+	internal sealed class ConsumingService : BackgroundService
 	{
 		private readonly ILogger<ConsumingService> _logger;
 		private readonly ConsumerConfig _consumerConfig;
@@ -57,11 +62,11 @@ namespace Raduz.KafkaClient.Consumer
 				consumer.Subscribe(_kafkaClientOptions.ConsumerRegistrations.Values.Select(topic => topic.TopicName));
 				_logger.LogInformation("Consumption of {topics}", _kafkaClientOptions.ConsumerRegistrations.Select(topic => $"\n{topic.Value.TopicName}"));
 
-				var cancelToken = new CancellationTokenSource();
+				var cancellationToken = new CancellationTokenSource().Token;
 
 				while (true)
 				{
-					var result = consumer.Consume(cancelToken.Token);
+					var result = consumer.Consume(cancellationToken);
 					string schemaName = result.Message.Value.Schema.Name;
 
 					if (_kafkaClientOptions.ConsumerRegistrations.Any(topic => topic.Key == schemaName))
@@ -70,7 +75,7 @@ namespace Raduz.KafkaClient.Consumer
 
 						_logger.LogInformation("Obtained data of type: {type}", schemaName);
 
-						if (await _mediator.Send(_kafkaClientOptions.ConsumerRegistrations[schemaName].GetRequest(data), cancelToken.Token))
+						if (await _mediator.Send(_kafkaClientOptions.ConsumerRegistrations[schemaName].GetRequest(data), cancellationToken))
 						{
 							_logger.LogInformation("Topic of type {type} handled", schemaName);
 						}

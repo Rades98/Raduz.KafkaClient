@@ -6,6 +6,7 @@ namespace Raduz.KafkaClient.Consumer.Consumer
 {
 	/// <summary>
 	/// Kafka consumer collections
+	/// Used for registration of consumers for consuming service
 	/// </summary>
 	public sealed class KafkaConsumerCollection
 	{

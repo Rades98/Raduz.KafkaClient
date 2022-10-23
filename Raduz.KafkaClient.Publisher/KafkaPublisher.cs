@@ -8,7 +8,7 @@ using Raduz.KafkaClient.Contracts.Publisher;
 
 namespace Raduz.KafkaClient.Publisher
 {
-	public class KafkaPublisher : IKafkaPublisher
+	public sealed class KafkaPublisher : IKafkaPublisher
 	{
 		private readonly ProducerConfig _producerConfig;
 		private readonly ILogger<KafkaPublisher> _logger;
@@ -25,14 +25,13 @@ namespace Raduz.KafkaClient.Publisher
 		public async Task PublishAsync<T>(string topicName, string key, T data, CancellationToken ct)
 			where T : class, ISpecificRecord
 		{
-
 			using var schemaRegistry = new CachedSchemaRegistryClient(_schemaRegistryConfig);
 			using var producer = new ProducerBuilder<string, T>(_producerConfig)
-					.SetValueSerializer(new AvroSerializer<T>(schemaRegistry, new AvroSerializerConfig()
-					{
-						BufferBytes = 100,
-					}))
-					.Build();
+				.SetValueSerializer(new AvroSerializer<T>(schemaRegistry, new AvroSerializerConfig()
+				{
+					BufferBytes = 100,
+				}))
+				.Build();
 			try
 			{
 				_logger.LogInformation("Producing of type {type}", typeof(T));

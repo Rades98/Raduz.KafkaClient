@@ -5,20 +5,16 @@ using Raduz.KafkaClient.Contracts.Requests;
 namespace Raduz.KafkaClient.Consumer.Consumer
 {
 	/// <summary>
-	/// KAfka consumer
+	/// Kafka consumer
 	/// </summary>
 	/// <typeparam name="TRecord">Specific AVRO record</typeparam>
 	/// <typeparam name="TRequest">Kafka client request <seealso cref="KafkaClientRequest{T}"/></typeparam>
 	public sealed class KafkaConsumer<TRecord, TRequest> : IKafkaConsumer where TRecord : ISpecificRecord where TRequest : KafkaClientRequest<TRecord>
 	{
-		/// <summary>
-		/// Name of consumed topic
-		/// </summary>
+		/// <inheritdoc/>
 		public string TopicName { get; }
 
-		/// <summary>
-		/// Type of AVRO
-		/// </summary>
+		/// <inheritdoc/>
 		public Type Schema { get; }
 
 		public KafkaConsumer(string topicName)
@@ -27,11 +23,7 @@ namespace Raduz.KafkaClient.Consumer.Consumer
 			Schema = typeof(TRecord);
 		}
 
-		/// <summary>
-		/// Get mediator request
-		/// </summary>
-		/// <param name="data"></param>
-		/// <returns></returns>
+		/// <inheritdoc/>
 		public IKafkaClientRequest GetRequest(ISpecificRecord data) => (IKafkaClientRequest)Activator.CreateInstance(typeof(TRequest), data)!;
 	}
 }
