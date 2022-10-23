@@ -70,9 +70,9 @@ Here we need to create request and handler implementing kafka client interfaces 
 ### Request creation
 Creating request is realy easy, cause only thing that you need is just to create class implementing abstract class KafkaClientRequest and provide some generated object from your AVRO scheme
 ``` cs
-public class YourRequest : KafkaClientRequest<AVROModel>
+public class YourRequest : KafkaClientRequest<{YOUR-AVRO-OBJECT}>
 {
-  public YourRequest(AVROModel specificRecord) : base(specificRecord)
+  public YourRequest({YOUR-AVRO-OBJECT} specificRecord) : base(specificRecord)
   {
   }
 }
@@ -105,7 +105,7 @@ public class YourHandler : IKafkaClientRequestHandler<YourRequest>
 To publish record to Kafka there is nothing easier than injecting IKafkaPusher to your class and call like:
 ```  cs
 var publisher = app.Services.GetService<IKafkaPublisher>()!; // or some other way to obtain
-await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", new AVROModel() { Data = data }, cancellationToken);
+await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", {YOUR-AVRO-OBJECT}, cancellationToken);
 ``` 
 
 # Used nuggets
