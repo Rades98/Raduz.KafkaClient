@@ -7,6 +7,12 @@ Easy to use kafka .net6 client.
 
 # How to use
 You can download packages from [here](https://github.com/Rades98?tab=packages) 
+Or just install from nuget.org:
++ NuGet\Install-Package Raduz.KafkaClient.Client -Version 1.0.0 - universall with all of bellow
++ NuGet\Install-Package Raduz.KafkaClient.Common -Version 1.0.0
++ NuGet\Install-Package Raduz.KafkaClient.Consumer -Version 1.0.0
++ NuGet\Install-Package Raduz.KafkaClient.Contracts -Version 1.0.0 - can be used as microsoft Abstractions pkgs
++ NuGet\Install-Package Raduz.KafkaClient.Publisher -Version 1.0.0
 
 ## AVRO object creation
 How to create AVROModel you can read [here](https://engineering.chrobinson.com/dotnet-avro/guides/cli-generate/)
