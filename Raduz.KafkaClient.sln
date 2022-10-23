@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raduz.KafkaClient.Consumer"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raduz.KafkaClient.Publisher", "Raduz.KafkaClient.Publisher\Raduz.KafkaClient.Publisher.csproj", "{0FB6919D-3F53-47DF-8742-3724A2D67188}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raduz.KafkaClient.Common", "Raduz.KafkaClient.Common\Raduz.KafkaClient.Common.csproj", "{6BFBD046-C606-45C2-948E-B788A828DD9D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raduz.KafkaClient.Common", "Raduz.KafkaClient.Common\Raduz.KafkaClient.Common.csproj", "{6BFBD046-C606-45C2-948E-B788A828DD9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raduz.KafkaClient.Client", "Raduz.KafkaClient.Client\Raduz.KafkaClient.Client.csproj", "{376688A0-1931-4EF1-B943-86B75A826E18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6BFBD046-C606-45C2-948E-B788A828DD9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BFBD046-C606-45C2-948E-B788A828DD9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BFBD046-C606-45C2-948E-B788A828DD9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{376688A0-1931-4EF1-B943-86B75A826E18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{376688A0-1931-4EF1-B943-86B75A826E18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{376688A0-1931-4EF1-B943-86B75A826E18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{376688A0-1931-4EF1-B943-86B75A826E18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

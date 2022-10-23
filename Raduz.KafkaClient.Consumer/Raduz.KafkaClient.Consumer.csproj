@@ -4,7 +4,18 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageProjectUrl>https://github.com/Rades98/Raduz.KafkaClient</PackageProjectUrl>
+    <PackageIcon>logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Rades98/Raduz.KafkaClient</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\..\Desktop\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />

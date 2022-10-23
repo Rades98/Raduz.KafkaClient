@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageProjectUrl>https://github.com/Rades98/Raduz.KafkaClient</PackageProjectUrl>
+    <PackageIcon>logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Rades98/Raduz.KafkaClient</RepositoryUrl>
+    <Description>Easy to use Kafka client using AVRO schema</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\..\Desktop\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Raduz.KafkaClient.Common\Raduz.KafkaClient.Common.csproj" />
+    <ProjectReference Include="..\Raduz.KafkaClient.Consumer\Raduz.KafkaClient.Consumer.csproj" />
+    <ProjectReference Include="..\Raduz.KafkaClient.Contracts\Raduz.KafkaClient.Contracts.csproj" />
+    <ProjectReference Include="..\Raduz.KafkaClient.Publisher\Raduz.KafkaClient.Publisher.csproj" />
+  </ItemGroup>
+
+</Project>
