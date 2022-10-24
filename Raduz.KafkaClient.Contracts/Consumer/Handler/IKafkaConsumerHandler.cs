@@ -1,11 +1,11 @@
 ﻿using Avro.Specific;
 
-namespace Raduz.KafkaClient.Contracts.Requests
+namespace Raduz.KafkaClient.Consumer
 {
 	/// <summary>
 	/// IKafkaClientRequestHandler
 	/// </summary>
-	/// <typeparam name="TRequest"><seealso cref="IKafkaClientRequest"/></typeparam>
+	/// <typeparam name="TSpecificRecord"><seealso cref="IKafkaHandler"/></typeparam>
 	public interface IKafkaConsumerHandler<TSpecificRecord> : IKafkaHandler where TSpecificRecord : ISpecificRecord
 	{
 		/// <summary>

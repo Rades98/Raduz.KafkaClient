@@ -2,12 +2,10 @@
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
-using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Raduz.KafkaClient.Common.Extensions;
-using Raduz.KafkaClient.Contracts.Requests;
 using YCherkes.SchemaRegistry.Serdes.Avro;
 
 namespace Raduz.KafkaClient.Consumer
@@ -25,7 +23,7 @@ namespace Raduz.KafkaClient.Consumer
 		private readonly IEnumerable<IKafkaHandler> _handlers;
 
 		private readonly CancellationTokenSource _cancellationTokenSource;
-		private const int MAX_CONSUME_RETRY_COUNT = 1; 
+		private const int MAX_CONSUME_RETRY_COUNT = 1;
 
 		public ConsumingService(
 			ILogger<ConsumingService> logger,
@@ -91,7 +89,7 @@ namespace Raduz.KafkaClient.Consumer
 
 						retries = 0;
 					}
-					catch(Exception e)
+					catch (Exception e)
 					{
 						_logger.LogError("KAfka consumption failed with error: {error}", e);
 

@@ -4,7 +4,6 @@ using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Raduz.KafkaClient.Contracts.Publisher;
 
 namespace Raduz.KafkaClient.Publisher
 {

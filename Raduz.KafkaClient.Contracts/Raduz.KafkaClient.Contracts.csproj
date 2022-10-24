@@ -10,7 +10,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>Raduz</Authors>
     <Company>Raduz inc</Company>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <PackageReference Include="Confluent.SchemaRegistry.Serdes.Avro" Version="1.9.3" />
-    <PackageReference Include="MediatR" Version="11.0.0" />
   </ItemGroup>
 
 </Project>

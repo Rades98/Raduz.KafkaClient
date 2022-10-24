@@ -1,6 +1,6 @@
 ﻿using Avro.Specific;
 
-namespace Raduz.KafkaClient.Contracts.Publisher
+namespace Raduz.KafkaClient.Publisher
 {
 	/// <summary>
 	/// Kafka publisher interface
