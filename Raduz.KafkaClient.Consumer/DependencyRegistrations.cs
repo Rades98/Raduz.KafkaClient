@@ -1,9 +1,9 @@
-﻿using Confluent.Kafka;
+﻿using System.Reflection;
+using Confluent.Kafka;
 using Confluent.SchemaRegistry;
-using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Raduz.KafkaClient.Consumer.Consumer;
+using Raduz.KafkaClient.Contracts.Requests;
 
 namespace Raduz.KafkaClient.Consumer
 {
@@ -16,18 +16,25 @@ namespace Raduz.KafkaClient.Consumer
 		/// <param name="configuration">Configuration from app settings </param>
 		/// <param name="opts">Kafka Consumer collection <seealso cref="KafkaConsumerCollection"/></param>
 		/// <returns></returns>
-		public static IServiceCollection ConfigureKafkaConsumer(this IServiceCollection services, IConfiguration configuration, Action<KafkaConsumerCollection> opts)
+		public static IServiceCollection ConfigureKafkaConsumer(
+			this IServiceCollection services,
+			IConfiguration configuration, Assembly assembly,
+			ServiceLifetime lifetime = ServiceLifetime.Transient)
 		{
 			services.Configure<ConsumerConfig>(configuration.GetSection(nameof(ConsumerConfig)));
 			services.Configure<SchemaRegistryConfig>(configuration.GetSection(nameof(SchemaRegistryConfig)));
 			services.AddHostedService<ConsumingService>();
 
-			var kafkaOpts = new KafkaConsumerCollection();
-			opts(kafkaOpts);
-
-			services.AddSingleton(kafkaOpts);
-
-			services.AddMediatR(AppDomain.CurrentDomain.GetAssemblies());
+			assembly.GetTypes().Where(type =>
+				type.BaseType is not null &&
+				type.BaseType.IsGenericType &&
+				type.BaseType.GetGenericTypeDefinition() is not null &&
+				ReferenceEquals(type.BaseType.GetGenericTypeDefinition(), typeof(KafkaConsumerHandler<>)) &&
+				type.BaseType.GetGenericArguments() is not null &&
+				type.BaseType.GetGenericArguments().Length >= 1 &&
+				typeof(IKafkaHandler).IsAssignableFrom(type.BaseType)
+			).ToList()
+			.ForEach(type => services.AddScoped(typeof(IKafkaHandler), type));
 
 			return services;
 		}

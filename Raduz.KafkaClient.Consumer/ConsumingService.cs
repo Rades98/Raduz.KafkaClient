@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Raduz.KafkaClient.Common.Extensions;
-using Raduz.KafkaClient.Consumer.Consumer;
+using Raduz.KafkaClient.Contracts.Requests;
 using YCherkes.SchemaRegistry.Serdes.Avro;
 
 namespace Raduz.KafkaClient.Consumer
@@ -22,23 +22,21 @@ namespace Raduz.KafkaClient.Consumer
 		private readonly ILogger<ConsumingService> _logger;
 		private readonly ConsumerConfig _consumerConfig;
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
-		private readonly IMediator _mediator;
-		private readonly KafkaConsumerCollection _kafkaClientOptions;
+		private readonly IEnumerable<IKafkaHandler> _handlers;
 
 		private readonly CancellationTokenSource _cancellationTokenSource;
+		private const int MAX_CONSUME_RETRY_COUNT = 1; 
 
 		public ConsumingService(
 			ILogger<ConsumingService> logger,
 			IOptions<ConsumerConfig> consumerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
-			IMediator mediator,
-			KafkaConsumerCollection kafkaClientOptions)
+			IEnumerable<IKafkaHandler> handlers)
 		{
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_consumerConfig = consumerConfig.Value ?? throw new ArgumentNullException(nameof(consumerConfig));
 			_schemaRegistryConfig = schemaRegistryConfig.Value ?? throw new ArgumentNullException(nameof(schemaRegistryConfig));
-			_mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-			_kafkaClientOptions = kafkaClientOptions ?? throw new ArgumentNullException(nameof(kafkaClientOptions));
+			_handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
 
 			_cancellationTokenSource = new CancellationTokenSource();
 		}
@@ -51,6 +49,9 @@ namespace Raduz.KafkaClient.Consumer
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
+			int retries = 0;
+			ConsumeResult<string, ISpecificRecord> consumeResult = new();
+
 			using var schemaRegistry = new CachedSchemaRegistryClient(_schemaRegistryConfig);
 			using var consumer = new ConsumerBuilder<string, ISpecificRecord>(_consumerConfig)
 				.SetLogHandler((_, message) => _logger.Log(message.Level.ToLogLevel(), "Kafka _logger: {name} {message}", message.Name, message.Message))
@@ -59,29 +60,53 @@ namespace Raduz.KafkaClient.Consumer
 
 			try
 			{
-				consumer.Subscribe(_kafkaClientOptions.ConsumerRegistrations.Values.Select(topic => topic.TopicName));
-				_logger.LogInformation("Consumption of {topics}", _kafkaClientOptions.ConsumerRegistrations.Select(topic => $"\n{topic.Value.TopicName}"));
+				consumer.Subscribe(_handlers.Select(handler => handler.TopicName));
+				_logger.LogInformation("Consumption of {topics}", _handlers.Select(handler => $"\n{handler.TopicName}"));
 
 				var cancellationToken = new CancellationTokenSource().Token;
 
 				while (true)
 				{
-					var result = consumer.Consume(cancellationToken);
-					string schemaName = result.Message.Value.Schema.Name;
-
-					if (_kafkaClientOptions.ConsumerRegistrations.Any(topic => topic.Key == schemaName))
+					try
 					{
-						var data = result.Message.Value;
+						consumeResult = consumer.Consume(cancellationToken);
+						string schemaName = consumeResult.Message.Value.Schema.Name;
 
-						_logger.LogInformation("Obtained data of type: {type}", schemaName);
-
-						if (await _mediator.Send(_kafkaClientOptions.ConsumerRegistrations[schemaName].GetRequest(data), cancellationToken))
+						if (_handlers.Any(handler => handler.Schema == schemaName))
 						{
-							_logger.LogInformation("Topic of type {type} handled", schemaName);
+							var data = consumeResult.Message.Value;
+
+							_logger.LogInformation("Obtained data of type: {type}", schemaName);
+
+							if (await _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken))
+							{
+								_logger.LogInformation("Topic of type {type} handled", schemaName);
+							}
+							else
+							{
+								_logger.LogError("Failed while handling topic of type {type}", schemaName);
+
+							}
+						}
+
+						retries = 0;
+					}
+					catch(Exception e)
+					{
+						_logger.LogError("KAfka consumption failed with error: {error}", e);
+
+						if (retries < MAX_CONSUME_RETRY_COUNT)
+						{
+							_logger.LogInformation("Trying to consume again (refreshing partition offset) attempt {attempt} of {maxAttmepts}", retries, MAX_CONSUME_RETRY_COUNT);
+
+							//retry by resetting consumer offset
+							consumer.Assign(consumeResult.TopicPartitionOffset);
+
+							retries++;
 						}
 						else
 						{
-							_logger.LogError("Failed while handling topic of type {type}", schemaName);
+							retries = 0;
 						}
 					}
 				}
