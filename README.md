@@ -61,46 +61,18 @@ In app settings you can set consumer, producer and schema registry (at this poin
 Add this code snipet to your service registration.
 ``` cs
    services.ConfigureKafkaPublisher(configuration)
-      .ConfigureKafkaConsumer(configuration, opts =>
-      {
-        //Here you can register consumer requests for specific topic and AVRO model
-        opts.AddConsumer<{AVRO-SCHEME}, {MEDIATOR-REQUEST}>("{TOPIC-NAME}");
-        ...
-      })
+      .ConfigureKafkaConsumer(configuration, opts);
 ```
 ## Consumer
-Here we need to create request and handler implementing kafka client interfaces and abstract class
-
-### Request creation
-Creating request is realy easy, cause only thing that you need is just to create class implementing abstract class KafkaClientRequest and provide some generated object from your AVRO scheme
-``` cs
-public class YourRequest : KafkaClientRequest<{YOUR-AVRO-OBJECT}>
-{
-  public YourRequest({YOUR-AVRO-OBJECT} specificRecord) : base(specificRecord)
-  {
-  }
-}
-```  
+Here we need to create handler implementing kafka client interfaces and abstract class
 
 ### Handler creation
-Handler should implement IKafkaClientRequestHandler where the generic argument is your created request
-```  cs
-public class YourHandler : IKafkaClientRequestHandler<YourRequest>
+Creating handler is realy easy, cause only thing that you need is just to create class implementing abstract class KafkaConsumerHandler and provide some generated object from your AVRO scheme and topic name. All Handlers are registered automagically, so you don't have to do any actions. Just create handler for topic and its avro object implementing ISpecificRecord.
+``` cs
+public class YourRequest : KafkaConsumerHandler<{YOUR-AVRO-OBJECT}>
 {
-  public YourHandler()
+  public YourRequest({YOUR-AVRO-OBJECT} specificRecord) : base("{TOPIC-NAME}")
   {
-    //YOUR DI
-  }
-
-  public async Task<bool> Handle(BulkCreateSubscriptionRequest request, CancellationToken cancellationToken)
-  {
-    //Handle request
-    if ({HANDLED})
-    {
-      return true;
-    }
-
-    return false;
   }
 }
 ```  
@@ -115,7 +87,6 @@ await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", {YOUR-AVRO-OBJECT}, c
 # Used nuggets
 Project 'Raduz.KafkaClient.Contracts' has the following package references
    > Confluent.SchemaRegistry.Serdes.Avro      1.9.3 
-   > MediatR                                   11.0.0
 
 Project 'Raduz.KafkaClient.Consumer' has the following package references
    > MediatR.Extensions.Microsoft.DependencyInjection          11.0.0 
