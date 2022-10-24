@@ -95,7 +95,7 @@ namespace Raduz.KafkaClient.Consumer
 
 						if (retries < MAX_CONSUME_RETRY_COUNT)
 						{
-							_logger.LogInformation("Trying to consume again (refreshing partition offset) attempt {attempt} of {maxAttmepts}", retries, MAX_CONSUME_RETRY_COUNT);
+							_logger.LogInformation("Trying to consume again (refreshing partition offset) attempt {attempt} of {maxAttmepts}", retries+1, MAX_CONSUME_RETRY_COUNT);
 
 							//retry by resetting consumer offset
 							consumer.Assign(consumeResult.TopicPartitionOffset);

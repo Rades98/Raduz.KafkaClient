@@ -2,7 +2,6 @@
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Raduz.KafkaClient.Contracts.Publisher;
 
 namespace Raduz.KafkaClient.Publisher
 {

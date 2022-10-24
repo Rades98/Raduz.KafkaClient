@@ -1,5 +1,4 @@
 ﻿using Avro.Specific;
-using Raduz.KafkaClient.Contracts.Requests;
 
 namespace Raduz.KafkaClient.Consumer
 {
@@ -8,7 +7,7 @@ namespace Raduz.KafkaClient.Consumer
 	/// </summary>
 	public interface IKafkaConsumer
 	{
-		 string TopicName { get; }
+		string TopicName { get; }
 
 		Type Schema { get; }
 
