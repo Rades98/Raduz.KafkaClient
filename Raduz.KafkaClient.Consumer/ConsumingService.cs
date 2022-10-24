@@ -48,7 +48,7 @@ namespace Raduz.KafkaClient.Consumer
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			int retries = 0;
-			ConsumeResult<string, ISpecificRecord> consumeResult = new();
+			ConsumeResult<string, ISpecificRecord>? consumeResult = null;
 
 			using var schemaRegistry = new CachedSchemaRegistryClient(_schemaRegistryConfig);
 			using var consumer = new ConsumerBuilder<string, ISpecificRecord>(_consumerConfig)
@@ -89,23 +89,37 @@ namespace Raduz.KafkaClient.Consumer
 
 						retries = 0;
 					}
-					catch (Exception e)
+					catch (ConsumeException e)
 					{
 						_logger.LogError("KAfka consumption failed with error: {error}", e);
 
-						if (retries < MAX_CONSUME_RETRY_COUNT)
-						{
-							_logger.LogInformation("Trying to consume again (refreshing partition offset) attempt {attempt} of {maxAttmepts}", retries+1, MAX_CONSUME_RETRY_COUNT);
-
-							//retry by resetting consumer offset
-							consumer.Assign(consumeResult.TopicPartitionOffset);
-
-							retries++;
-						}
-						else
+						if(consumeResult is null)
 						{
 							retries = 0;
 						}
+						else
+						{
+							if (retries < MAX_CONSUME_RETRY_COUNT)
+							{
+								_logger.LogInformation("Trying to consume again (refreshing partition offset) attempt {attempt} of {maxAttmepts}", retries + 1, MAX_CONSUME_RETRY_COUNT);
+
+								//retry by resetting consumer offset
+								consumer.Assign(consumeResult!.TopicPartitionOffset);
+
+								retries++;
+							}
+							else
+							{
+								retries = 0;
+							}
+						}
+						
+					}
+					catch (OperationCanceledException oe)
+					{
+						_logger.LogError("Topic is unconsumable due cancellation info: {error}", oe);
+						consumer.Close();
+						break;
 					}
 				}
 			}
