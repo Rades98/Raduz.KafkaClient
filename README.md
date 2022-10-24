@@ -7,6 +7,17 @@ Easy to use kafka .net6 client.
 
 # How to use
 You can download packages from [here](https://github.com/Rades98?tab=packages) 
+Or just install from nuget.org:
++ NuGet\Install-Package Raduz.KafkaClient.Client -Version 1.0.0 
+  - Universall with all of bellow
++ NuGet\Install-Package Raduz.KafkaClient.Common -Version 1.0.0
+  - Some extensions
++ NuGet\Install-Package Raduz.KafkaClient.Consumer -Version 1.0.0
+  - Can be used as solo consumer
++ NuGet\Install-Package Raduz.KafkaClient.Contracts -Version 1.0.0 
+  - Can be used as microsoft "Abstractions" packages in projects,</br> where is no need to include whole package, </br> but you need contracts for building requests or some pipelines etc.
++ NuGet\Install-Package Raduz.KafkaClient.Publisher -Version 1.0.0
+  - Can be used as solo publisher
 
 ## AVRO object creation
 How to create AVROModel you can read [here](https://engineering.chrobinson.com/dotnet-avro/guides/cli-generate/)
@@ -16,13 +27,17 @@ How to create AVROModel you can read [here](https://engineering.chrobinson.com/d
 To use kafka client you have to register it in your DI container and provide configuration
 
 ### appsettings.json
-In app settings you can set consumer, producer and schema registry (at this point there is no common registration)
+In app settings you can set consumer, producer and schema registry (at this point there is no common registration). </br>All registration settings are made by Confluent.Kafka. You can read more in their documentation 
++ [ConsumerConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.Kafka.ConsumerConfig.html)
++ [ProducerrConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.Kafka.ProducerConfig.html)
++ [SchemaRegistryConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.SchemaRegistry.SchemaRegistryConfig.html)
+
 ``` json
 "ConsumerConfig": {
     "GroupId": "{CONSUMER-GROUP-ID}",
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
     "AutoOffsetReset" : 1,
-    //OPTIONAL
+    //OPTIONAL f.e.
     "SecurityProtocol": 3,
     "SaslMechanism": {SASL-MECHANISM},
     "SaslUsername": "{SASL-USER-NAME}",
@@ -30,12 +45,12 @@ In app settings you can set consumer, producer and schema registry (at this poin
   },
   "SchemaRegistryConfig": {
     "Url": "{SCHEMA-REGISTRY-URL}",
-    //OPTIONAL
+    //OPTIONAL f.e.
     "BasicAuthUserInfo": "{KEY}:{TOKEN}"
   },
   "ProducerConfig": {
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
-    //OPTIONAL
+    //OPTIONAL f.e.
     "SecurityProtocol": 3,
     "SaslMechanism": {SASL-MECHANISM},
     "SaslUsername": "{SASL-USER-NAME}",
@@ -59,9 +74,9 @@ Here we need to create request and handler implementing kafka client interfaces 
 ### Request creation
 Creating request is realy easy, cause only thing that you need is just to create class implementing abstract class KafkaClientRequest and provide some generated object from your AVRO scheme
 ``` cs
-public class YourRequest : KafkaClientRequest<AVROModel>
+public class YourRequest : KafkaClientRequest<{YOUR-AVRO-OBJECT}>
 {
-  public YourRequest(AVROModel specificRecord) : base(specificRecord)
+  public YourRequest({YOUR-AVRO-OBJECT} specificRecord) : base(specificRecord)
   {
   }
 }
@@ -94,7 +109,7 @@ public class YourHandler : IKafkaClientRequestHandler<YourRequest>
 To publish record to Kafka there is nothing easier than injecting IKafkaPusher to your class and call like:
 ```  cs
 var publisher = app.Services.GetService<IKafkaPublisher>()!; // or some other way to obtain
-await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", new AVROModel() { Data = data }, cancellationToken);
+await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", {YOUR-AVRO-OBJECT}, cancellationToken);
 ``` 
 
 # Used nuggets
