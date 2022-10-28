@@ -61,7 +61,7 @@ In app settings you can set consumer, producer and schema registry (at this poin
 Add this code snipet to your service registration.
 ``` cs
    services.ConfigureKafkaPublisher(configuration)
-      .ConfigureKafkaConsumer(configuration, opts);
+      .ConfigureKafkaConsumer(configuration);
 ```
 ## Consumer
 Here we need to create handler implementing kafka client interfaces and abstract class
