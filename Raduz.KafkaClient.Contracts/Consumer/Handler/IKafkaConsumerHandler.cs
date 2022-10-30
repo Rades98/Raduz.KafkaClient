@@ -1,6 +1,6 @@
 ﻿using Avro.Specific;
 
-namespace Raduz.KafkaClient.Consumer
+namespace Raduz.KafkaClient.Contracts.Consumer.Handler
 {
 	/// <summary>
 	/// IKafkaClientRequestHandler

@@ -1,6 +1,7 @@
 ﻿using Avro.Specific;
+using Raduz.KafkaClient.Contracts.Consumer.Handler;
 
-namespace Raduz.KafkaClient.Consumer
+namespace Raduz.KafkaClient.Contracts.Consumer
 {
 	/// <summary>
 	/// Kafka consumer interface

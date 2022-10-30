@@ -3,6 +3,8 @@ using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Raduz.KafkaClient.Contracts.Consumer;
+using Raduz.KafkaClient.Contracts.Consumer.Handler;
 
 namespace Raduz.KafkaClient.Consumer
 {
@@ -32,6 +34,12 @@ namespace Raduz.KafkaClient.Consumer
 				typeof(IKafkaHandler).IsAssignableFrom(type.BaseType)
 			).ToList()
 			.ForEach(type => services.AddScoped(typeof(IKafkaHandler), type));
+
+			var errorHandler = assembly.GetTypes().FirstOrDefault(type => type.IsAssignableFrom(typeof(IConsumerExceptionHandler)));
+			if(errorHandler is not null)
+			{
+				services.AddScoped(typeof(IConsumerExceptionHandler), errorHandler);
+			}
 
 			return services;
 		}
