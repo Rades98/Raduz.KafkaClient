@@ -71,7 +71,7 @@ Creating handler is realy easy, cause only thing that you need is just to create
 ``` cs
 public class YourRequest : KafkaConsumerHandler<{YOUR-AVRO-OBJECT}>
 {
-  public YourRequest({YOUR-AVRO-OBJECT} specificRecord) : base("{TOPIC-NAME}")
+  public YourRequest() : base("{TOPIC-NAME}")
   {
   }
 }
