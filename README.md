@@ -33,7 +33,7 @@ In app settings you can set consumer, producer and schema registry (at this poin
 + [SchemaRegistryConfig](https://docs.confluent.io/platform/current/clients/confluent-kafka-dotnet/_site/api/Confluent.SchemaRegistry.SchemaRegistryConfig.html)
 
 ``` json
-"ConsumerConfig": {
+"KafkaClientConsumerConfig": {
     "GroupId": "{CONSUMER-GROUP-ID}",
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
     "AutoOffsetReset" : 1,
@@ -48,7 +48,7 @@ In app settings you can set consumer, producer and schema registry (at this poin
     //OPTIONAL f.e.
     "BasicAuthUserInfo": "{KEY}:{TOKEN}"
   },
-  "ProducerConfig": {
+  "KafkaClientProducerConfig": {
     "BootstrapServers": "{YOUR-BOOTSTRAP-KAFKA-SERVER}",
     //OPTIONAL f.e.
     "SecurityProtocol": 3,
@@ -79,6 +79,9 @@ public class YourRequest : KafkaConsumerHandler<{YOUR-AVRO-OBJECT}>
 
 ### Exception handling
 For handling exceptions you can implement IConsumerExceptionHandler
+
+### Pipeline creation
+For logging or performing some other stuff on consumming you can write your very own pipelines by creating objects implementing IConsumerPipelineBehaviour
 
 ## Publisher
 To publish record to Kafka there is nothing easier than injecting IKafkaPusher to your class and call like:
