@@ -77,12 +77,18 @@ public class YourRequest : KafkaConsumerHandler<{YOUR-AVRO-OBJECT}>
 }
 ```  
 
+### Exception handling
+For handling exceptions you can implement IConsumerExceptionHandler
+
 ## Publisher
 To publish record to Kafka there is nothing easier than injecting IKafkaPusher to your class and call like:
 ```  cs
 var publisher = app.Services.GetService<IKafkaPublisher>()!; // or some other way to obtain
 await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", {YOUR-AVRO-OBJECT}, cancellationToken);
 ``` 
+### Exception handling
+For handling exceptions you can implement IPublisherExceptionHandler
+
 
 # Used nuggets
 Project 'Raduz.KafkaClient.Contracts' has the following package references
