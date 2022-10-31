@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Publisher;
 
 namespace Raduz.KafkaClient.Publisher
@@ -17,7 +18,7 @@ namespace Raduz.KafkaClient.Publisher
 		/// <returns></returns>
 		public static IServiceCollection ConfigureKafkaPublisher(this IServiceCollection services, IConfiguration configuration)
 		{
-			services.Configure<ProducerConfig>(configuration.GetSection(nameof(ProducerConfig)));
+			services.Configure<KafkaClientProducerConfig>(configuration.GetSection(nameof(KafkaClientProducerConfig)));
 			services.Configure<SchemaRegistryConfig>(configuration.GetSection(nameof(SchemaRegistryConfig)));
 			services.AddScoped<IKafkaPublisher, KafkaPublisher>();
 
@@ -33,11 +34,11 @@ namespace Raduz.KafkaClient.Publisher
 		/// <returns></returns>
 		public static IServiceCollection ConfigureKafkaPublisher(this IServiceCollection services, IConfiguration configuration, Assembly assembly)
 		{
-			services.Configure<ProducerConfig>(configuration.GetSection(nameof(ProducerConfig)));
+			services.Configure<KafkaClientProducerConfig>(configuration.GetSection(nameof(KafkaClientProducerConfig)));
 			services.Configure<SchemaRegistryConfig>(configuration.GetSection(nameof(SchemaRegistryConfig)));
 			services.AddScoped<IKafkaPublisher, KafkaPublisher>();
 
-			var errorHandler = assembly.GetTypes().FirstOrDefault(type => type.IsAssignableFrom(typeof(IPublisherExceptionHandler)));
+			var errorHandler = assembly.GetTypes().FirstOrDefault(type => type.GetInterfaces().Contains(typeof(IPublisherExceptionHandler)));
 			if (errorHandler is not null)
 			{
 				services.AddScoped(typeof(IPublisherExceptionHandler), errorHandler);

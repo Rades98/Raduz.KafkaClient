@@ -45,3 +45,5 @@
 	For Consumer implement IConsumerExceptionHandler
 
 4) Enjoy easily used package :)
+
+Issues or feature requests report here, please https://github.com/Rades98/Raduz.KafkaClient/issues

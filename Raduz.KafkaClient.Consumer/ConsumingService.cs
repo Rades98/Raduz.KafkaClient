@@ -4,6 +4,7 @@ using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Raduz.KafkaClient.Consumer.Pipeline;
 using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Consumer;
 using Raduz.KafkaClient.Contracts.Consumer.Handler;
@@ -15,12 +16,13 @@ namespace Raduz.KafkaClient.Consumer
 	/// Hosted service consuming kafka topics provided 
 	/// by registration and calling its handler 
 	/// </summary>
-	internal sealed class ConsumingService : BackgroundService
+	public sealed class ConsumingService : BackgroundService
 	{
 		private readonly KafkaClientConsumerConfig _consumerConfig;
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
 		private readonly IEnumerable<IKafkaHandler> _handlers;
 		private readonly IConsumerExceptionHandler? _exceptionHandler;
+		private readonly IConsumerPipelineBuilder? _pipelineBuilder;
 
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
@@ -28,12 +30,19 @@ namespace Raduz.KafkaClient.Consumer
 			IOptions<KafkaClientConsumerConfig> consumerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
 			IEnumerable<IKafkaHandler> handlers,
-			IConsumerExceptionHandler exceptionHandler)
+			IConsumerExceptionHandler? exceptionHandler = null,
+			IEnumerable<IConsumerPipelineBehaviour>? pipelineBehaviours = null)
 		{
 			_consumerConfig = consumerConfig.Value ?? throw new ArgumentNullException(nameof(consumerConfig));
 			_schemaRegistryConfig = schemaRegistryConfig.Value ?? throw new ArgumentNullException(nameof(schemaRegistryConfig));
 			_handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
+
 			_exceptionHandler = exceptionHandler;
+
+			if (pipelineBehaviours is not null)
+			{
+				_pipelineBuilder = new ConsumerPipelineBuilder(pipelineBehaviours);
+			}
 
 			_cancellationTokenSource = new CancellationTokenSource();
 		}
@@ -71,9 +80,15 @@ namespace Raduz.KafkaClient.Consumer
 						{
 							var data = consumeResult.Message.Value;
 
-							if (!(await _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken)))
+							if (_pipelineBuilder is not null)
 							{
-								_exceptionHandler?.Handle(new Exception($"Failed while handling topic of type {schemaName}"));
+								var pipeline = _pipelineBuilder.Build();
+								pipeline.Execute(() => _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken));
+								pipeline.Finished += async res => await HandleResult(res, schemaName);
+							}
+							else
+							{
+								await HandleResult(await _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken), schemaName);
 							}
 						}
 
@@ -97,14 +112,28 @@ namespace Raduz.KafkaClient.Consumer
 							else
 							{
 								retries = 0;
-								_exceptionHandler?.Handle(e);
+								if (_exceptionHandler is not null)
+								{
+									await _exceptionHandler.Handle(e);
+								}
+								else
+								{
+									throw;
+								}
 							}
 						}
 
 					}
 					catch (OperationCanceledException oe)
 					{
-						_exceptionHandler?.Handle(oe);
+						if (_exceptionHandler is not null)
+						{
+							await _exceptionHandler.Handle(oe);
+						}
+						else
+						{
+							throw;
+						}
 						consumer.Close();
 						break;
 					}
@@ -112,11 +141,34 @@ namespace Raduz.KafkaClient.Consumer
 			}
 			catch (Exception e)
 			{
-				_exceptionHandler?.Handle(e);
+				if (_exceptionHandler is not null)
+				{
+					await _exceptionHandler.Handle(e);
+				}
+				else
+				{
+					throw;
+				}
 			}
 			finally
 			{
 				consumer.Close();
+			}
+		}
+
+		private async Task HandleResult(bool result, string schemaName)
+		{
+			if (!result)
+			{
+				var exception = new Exception($"Failed while handling topic of type {schemaName}");
+				if (_exceptionHandler is not null)
+				{
+					await _exceptionHandler.Handle(exception);
+				}
+				else
+				{
+					throw exception;
+				}
 			}
 		}
 	}

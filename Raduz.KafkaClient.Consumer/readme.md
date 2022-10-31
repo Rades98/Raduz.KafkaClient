@@ -29,5 +29,11 @@ How to use:
 	
 	For Consumer implement IConsumerExceptionHandler
 
-4) Enjoy easily used package :)
+4) Implement consumer pipeline behaviour
 
+	IConsumerPipelineBehaviour 
+	
+
+5) Enjoy easily used package :)
+
+Issues or feature requests report here, please https://github.com/Rades98/Raduz.KafkaClient/issues

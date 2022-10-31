@@ -24,3 +24,5 @@ How to use:
 	For Publisher implement IPublisherExceptionHandler 
 
 4) Enjoy easily used package :)
+
+Issues or feature requests report here, please https://github.com/Rades98/Raduz.KafkaClient/issues

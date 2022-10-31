@@ -18,10 +18,11 @@ namespace Raduz.KafkaClient.Publisher
 		public KafkaPublisher(
 			IOptions<KafkaClientProducerConfig> producerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
-			IPublisherExceptionHandler exceptionHandler)
+			IPublisherExceptionHandler? exceptionHandler = null)
 		{
 			_producerConfig = producerConfig?.Value ?? throw new ArgumentNullException(nameof(producerConfig));
 			_schemaRegistryConfig = schemaRegistryConfig.Value ?? throw new ArgumentNullException(nameof(schemaRegistryConfig));
+
 			_exceptionHandler = exceptionHandler;
 		}
 
@@ -48,13 +49,27 @@ namespace Raduz.KafkaClient.Publisher
 					{
 						if (task.IsFaulted)
 						{
-							_exceptionHandler?.Handle(task.Exception);
+							if (_exceptionHandler is not null)
+							{
+								_exceptionHandler.Handle(task.Exception);
+							}
+							else
+							{
+								throw task.Exception ?? new Exception("Some error has occured");
+							}
 						}
 					}, ct);
 			}
 			catch (Exception ex)
 			{
-				_exceptionHandler?.Handle(ex);
+				if (_exceptionHandler is not null)
+				{
+					await _exceptionHandler.Handle(ex);
+				}
+				else
+				{
+					throw;
+				}
 			}
 		}
 
@@ -74,7 +89,15 @@ namespace Raduz.KafkaClient.Publisher
 				}
 				catch (CreateTopicsException e)
 				{
-					_exceptionHandler?.Handle(e);
+					if (_exceptionHandler is not null)
+					{
+						await _exceptionHandler.Handle(e);
+					}
+					else
+					{
+						throw;
+					}
+
 				}
 			}
 		}
