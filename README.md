@@ -79,9 +79,47 @@ public class YourRequest : KafkaConsumerHandler<{YOUR-AVRO-OBJECT}>
 
 ### Exception handling
 For handling exceptions you can implement IConsumerExceptionHandler
+```  cs
+public class ConsumerExceptionHandler : IConsumerExceptionHandler
+{
+  private readonly ILogger _logger;
+  public ConsumerExceptionHandler(ILogger logger)
+  {
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+  }
+
+  public Task Handle(Exception? e)
+  {
+    _logger.LogError(e);
+  }
+}
+``` 
 
 ### Pipeline creation
 For logging or performing some other stuff on consumming you can write your very own pipelines by creating objects implementing IConsumerPipelineBehaviour
+
+```  cs
+public class ConsumerPipeline : IConsumerPipelineBehaviour
+{
+  private readonly ILogger _logger;
+  public ConsumerPipeline(ILogger logger)
+  {
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+  }
+
+  public async Task<bool> Handle(HandlerDelegate next, CancellationToken ct)
+  {
+    var sw = new Stopwatch();
+    sw.Start();
+    var result = await next();
+    sw.Stop();
+
+    _logger.LogInformation("Request handling took {elapsed} ms", sw.ElapsedMilliseconds); 
+
+    return result;
+  }
+}
+``` 
 
 ## Publisher
 To publish record to Kafka there is nothing easier than injecting IKafkaPusher to your class and call like:
@@ -91,7 +129,21 @@ await publisher.PublishAsync("{TOPIC-NAME}", "{SOME-KEY}", {YOUR-AVRO-OBJECT}, c
 ``` 
 ### Exception handling
 For handling exceptions you can implement IPublisherExceptionHandler
+```  cs
+public class PublisherExceptionHandler : IPublisherExceptionHandler
+{
+  private readonly ILogger _logger;
+  public ConsumerExceptionHandler(ILogger logger)
+  {
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+  }
 
+  public Task Handle(Exception? e)
+  {
+    _logger.LogError(e);
+  }
+}
+``` 
 
 # Used nuggets
 Project 'Raduz.KafkaClient.Contracts' has the following package references
