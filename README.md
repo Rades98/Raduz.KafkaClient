@@ -107,13 +107,13 @@ public class ConsumerPipeline : IConsumerPipelineBehaviour
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
 
-  public async Task<bool> Handle(HandlerDelegate next, CancellationToken ct)
+  public async Task<bool> Handle(HandlerDelegate next, ISpecificRecord data, CancellationToken ct)
   {
     var sw = new Stopwatch();
     sw.Start();
     var result = await next();
     sw.Stop();
-
+    
     _logger.LogInformation("Request handling took {elapsed} ms", sw.ElapsedMilliseconds); 
 
     return result;
