@@ -150,17 +150,16 @@ Project 'Raduz.KafkaClient.Contracts' has the following package references
    > Confluent.SchemaRegistry.Serdes.Avro      1.9.3 
 
 Project 'Raduz.KafkaClient.Consumer' has the following package references
-   > MediatR.Extensions.Microsoft.DependencyInjection          11.0.0 
    > Microsoft.Extensions.Configuration.Abstractions           6.0.0 
    > Microsoft.Extensions.Hosting.Abstractions                 6.0.0  
-   > Microsoft.Extensions.Options.ConfigurationExtensions      6.0.0  
-   > YCherkes.SchemaRegistry.Serdes.Avro                       1.0.4   
+   > Microsoft.Extensions.Options.ConfigurationExtensions      6.0.0   
+   > YCherkes.SchemaRegistry.Serdes.Avro                       1.0.4 
 
 Project 'Raduz.KafkaClient.Publisher' has the following package references
-   > Microsoft.Extensions.Configuration.Abstractions            6.0.0   
-   > Microsoft.Extensions.DependencyInjection.Abstractions      6.0.0  
-   > Microsoft.Extensions.Logging.Abstractions                  6.0.2   
-   > Microsoft.Extensions.Options.ConfigurationExtensions       6.0.0  
+   > Microsoft.Extensions.Configuration.Abstractions            6.0.0 
+   > Microsoft.Extensions.DependencyInjection.Abstractions      6.0.0 
+   > Microsoft.Extensions.Logging.Abstractions                  6.0.2 
+   > Microsoft.Extensions.Options.ConfigurationExtensions       6.0.0   
 
 Project 'Raduz.KafkaClient.Common' has the following package references
    > Confluent.Kafka                                1.9.3 
