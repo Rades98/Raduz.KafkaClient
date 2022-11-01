@@ -2,7 +2,6 @@
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Raduz.KafkaClient.Consumer.Pipeline;
 using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Consumer;
 using Raduz.KafkaClient.Contracts.Consumer.Handler;

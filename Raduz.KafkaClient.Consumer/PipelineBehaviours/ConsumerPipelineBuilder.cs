@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using Avro.Specific;
 
-namespace Raduz.KafkaClient.Consumer.Pipeline
+namespace Raduz.KafkaClient.Consumer
 {
 	internal class ConsumerPipelineBuilder : IConsumerPipelineBuilder
 	{
@@ -10,10 +11,19 @@ namespace Raduz.KafkaClient.Consumer.Pipeline
 
 		public event Action<bool> Finished = delegate { };
 
-		public ConsumerPipelineBuilder(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours)
+		public ConsumerPipelineBuilder()
 		{
 			_ctSource = new CancellationTokenSource();
-			pipelineBehaviours.ToList().ForEach(behaviour => _pipelineSteps.Add(input => behaviour.Handle(input, _ctSource.Token)));
+		}
+
+		public void AddStep(IConsumerPipelineBehaviour behaviour, ISpecificRecord data)
+		{
+			_pipelineSteps.Add(input => behaviour.Handle(input, data, _ctSource.Token));
+		}
+
+		public void AddSteps(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours, ISpecificRecord data)
+		{
+			pipelineBehaviours.ToList().ForEach(behaviour => _pipelineSteps.Add(input => behaviour.Handle(input, data, _ctSource.Token)));
 		}
 
 		public void Execute(HandlerDelegate input)
@@ -35,9 +45,9 @@ namespace Raduz.KafkaClient.Consumer.Pipeline
 					int bufferIndexLocal = bufferIndex;
 					await Task.Run(async () =>
 					{
-						foreach (HandlerDelegate input in _buffers[bufferIndexLocal].GetConsumingEnumerable())
+						foreach (var input in _buffers[bufferIndexLocal].GetConsumingEnumerable())
 						{
-							Task<bool> output = (Task<bool>)pipelineStep.Invoke(input);
+							var output = pipelineStep.Invoke(input);
 
 							bool isLastStep = bufferIndexLocal == _pipelineSteps.Count - 1;
 							if (isLastStep)

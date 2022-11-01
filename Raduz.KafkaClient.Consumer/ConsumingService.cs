@@ -4,7 +4,6 @@ using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Raduz.KafkaClient.Consumer.Pipeline;
 using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Consumer;
 using Raduz.KafkaClient.Contracts.Consumer.Handler;
@@ -22,7 +21,7 @@ namespace Raduz.KafkaClient.Consumer
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
 		private readonly IEnumerable<IKafkaHandler> _handlers;
 		private readonly IConsumerExceptionHandler? _exceptionHandler;
-		private readonly IConsumerPipelineBuilder? _pipelineBuilder;
+		private readonly IEnumerable<IConsumerPipelineBehaviour>? _pipelineBehaviours;
 
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
@@ -39,10 +38,7 @@ namespace Raduz.KafkaClient.Consumer
 
 			_exceptionHandler = exceptionHandler;
 
-			if (pipelineBehaviours is not null)
-			{
-				_pipelineBuilder = new ConsumerPipelineBuilder(pipelineBehaviours);
-			}
+			_pipelineBehaviours = pipelineBehaviours;
 
 			_cancellationTokenSource = new CancellationTokenSource();
 		}
@@ -80,9 +76,13 @@ namespace Raduz.KafkaClient.Consumer
 						{
 							var data = consumeResult.Message.Value;
 
-							if (_pipelineBuilder is not null)
+							if (_pipelineBehaviours is not null)
 							{
-								var pipeline = _pipelineBuilder.Build();
+								var builder = new ConsumerPipelineBuilder();
+
+								builder.AddSteps(_pipelineBehaviours, data);
+
+								var pipeline = builder.Build();
 								pipeline.Execute(() => _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken));
 								pipeline.Finished += async res => await HandleResult(res, schemaName);
 							}
