@@ -23,6 +23,6 @@ namespace Raduz.KafkaClient.Contracts.Consumer.Handler
 		/// <param name="record">Obtained data from cunsumption of the topic</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <returns></returns>
-		public Task<bool> HandleRecordAsync(ISpecificRecord record, CancellationToken ct);
+		public Task HandleRecordAsync(ISpecificRecord record, CancellationToken ct);
 	}
 }
