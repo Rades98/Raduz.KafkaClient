@@ -6,12 +6,12 @@ namespace Raduz.KafkaClient.Consumer
 	{
 		void Execute(HandlerDelegate input);
 
-		event Action<bool> Finished;
+		event Action<Task> Finished;
 
 		public IConsumerPipelineBuilder Build();
 
-		void AddStep(IConsumerPipelineBehaviour behaviour, ISpecificRecord data);
+		void AddStep(IConsumerPipelineBehaviour behaviour, ISpecificRecord data, string topicName);
 
-		void AddSteps(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours, ISpecificRecord data);
+		void AddSteps(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours, ISpecificRecord data, string topicName);
 	}
 }

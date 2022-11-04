@@ -2,8 +2,8 @@
 using Confluent.Kafka;
 using Confluent.Kafka.SyncOverAsync;
 using Confluent.SchemaRegistry;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Raduz.KafkaClient.Consumer.Exceptions;
 using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Consumer;
 using Raduz.KafkaClient.Contracts.Consumer.Handler;
@@ -15,7 +15,7 @@ namespace Raduz.KafkaClient.Consumer
 	/// Hosted service consuming kafka topics provided 
 	/// by registration and calling its handler 
 	/// </summary>
-	public sealed class ConsumingService : BackgroundService
+	public sealed class ConsumingService : IConsumingService
 	{
 		private readonly KafkaClientConsumerConfig _consumerConfig;
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
@@ -23,12 +23,14 @@ namespace Raduz.KafkaClient.Consumer
 		private readonly IConsumerExceptionHandler? _exceptionHandler;
 		private readonly IEnumerable<IConsumerPipelineBehaviour>? _pipelineBehaviours;
 
-		private readonly CancellationTokenSource _cancellationTokenSource;
+		private CancellationTokenSource _consumerCancellationTokenSource;
+		private bool _run = true;
 
 		public ConsumingService(
 			IOptions<KafkaClientConsumerConfig> consumerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
 			IEnumerable<IKafkaHandler> handlers,
+			IConsumerManager consumerManager,
 			IConsumerExceptionHandler? exceptionHandler = null,
 			IEnumerable<IConsumerPipelineBehaviour>? pipelineBehaviours = null)
 		{
@@ -40,17 +42,29 @@ namespace Raduz.KafkaClient.Consumer
 
 			_pipelineBehaviours = pipelineBehaviours;
 
-			_cancellationTokenSource = new CancellationTokenSource();
+			_consumerCancellationTokenSource = new CancellationTokenSource();
+
+			if (consumerManager is not null)
+			{
+				consumerManager.RunStateChange += delegate (object? sender, IConsumerManagerEventArgs e)
+				{
+					_run = e.Run;
+
+					if (e.Run)
+					{
+						_consumerCancellationTokenSource = new();
+					}
+					else
+					{
+						_consumerCancellationTokenSource.Cancel();
+					}
+				};
+			}
 		}
 
-		public override Task StartAsync(CancellationToken cancellationToken)
+		public async Task DoWork(CancellationToken stoppingToken)
 		{
-			cancellationToken.Register(() => _cancellationTokenSource.Cancel());
-			return base.StartAsync(cancellationToken);
-		}
-
-		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-		{
+			//separatni thread
 			int retries = 0;
 			ConsumeResult<string, ISpecificRecord>? consumeResult = null;
 
@@ -61,60 +75,91 @@ namespace Raduz.KafkaClient.Consumer
 
 			try
 			{
-				consumer.Subscribe(_handlers.Select(handler => handler.TopicName));
+				consumer.Subscribe(_handlers.GroupBy(handler => handler.TopicName).Select(grp => grp.First().TopicName));
 
-				var cancellationToken = new CancellationTokenSource().Token;
+				var cancellationToken = _consumerCancellationTokenSource.Token;
 
 				while (true)
 				{
-					try
+					if (_run)
 					{
-						consumeResult = consumer.Consume(cancellationToken);
-						string schemaName = consumeResult.Message.Value.Schema.Name;
-
-						if (_handlers.Any(handler => handler.Schema == schemaName))
+						try
 						{
-							var data = consumeResult.Message.Value;
+							consumeResult = consumer.Consume(cancellationToken);
+							string schemaName = consumeResult.Message.Value.Schema.Name;
+							string topicName = consumeResult.Topic;
 
-							if (_pipelineBehaviours is not null)
+							if (_handlers.Any(handler => handler.Schema == schemaName && handler.TopicName == topicName))
 							{
-								var builder = new ConsumerPipelineBuilder();
+								var data = consumeResult.Message.Value;
 
-								builder.AddSteps(_pipelineBehaviours, data);
+								if (_pipelineBehaviours is not null)
+								{
+									var builder = new ConsumerPipelineBuilder();
 
-								var pipeline = builder.Build();
-								pipeline.Execute(() => _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken));
-								pipeline.Finished += async res => await HandleResult(res, schemaName);
+									builder.AddSteps(_pipelineBehaviours, data, topicName);
+
+									var pipeline = builder.Build();
+									pipeline.Execute(() => _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken));
+									pipeline.Finished += delegate { };
+								}
+								else
+								{
+									await _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken);
+								}
 							}
 							else
 							{
-								await HandleResult(await _handlers.First(handler => handler.Schema == schemaName).HandleRecordAsync(data, cancellationToken), schemaName);
-							}
-						}
-
-						retries = 0;
-					}
-					catch (ConsumeException e)
-					{
-						if (consumeResult is null)
-						{
-							retries = 0;
-						}
-						else
-						{
-							if (retries < _consumerConfig.MaxConsumeRetryCount)
-							{
-								//retry by resetting consumer offset
-								consumer.Assign(consumeResult!.TopicPartitionOffset);
-
-								retries++;
-							}
-							else
-							{
-								retries = 0;
+								var exception = new NotImplementedHandlerException($"There is no implemented handler for topic: {topicName} with schema: {schemaName}");
 								if (_exceptionHandler is not null)
 								{
-									await _exceptionHandler.Handle(e);
+									await _exceptionHandler.Handle(exception);
+								}
+								else
+								{
+									throw exception;
+								}
+							}
+
+							retries = 0;
+						}
+						catch (ConsumeException e)
+						{
+							if (consumeResult is null)
+							{
+								retries = 0;
+							}
+							else
+							{
+								if (retries < _consumerConfig.MaxConsumeRetryCount)
+								{
+									//retry by resetting consumer offset
+									consumer.Assign(consumeResult!.TopicPartitionOffset);
+
+									retries++;
+								}
+								else
+								{
+									retries = 0;
+									if (_exceptionHandler is not null)
+									{
+										await _exceptionHandler.Handle(e);
+									}
+									else
+									{
+										throw;
+									}
+								}
+							}
+
+						}
+						catch (OperationCanceledException oe)
+						{
+							if (_run)
+							{
+								if (_exceptionHandler is not null)
+								{
+									await _exceptionHandler.Handle(oe);
 								}
 								else
 								{
@@ -122,53 +167,16 @@ namespace Raduz.KafkaClient.Consumer
 								}
 							}
 						}
-
-					}
-					catch (OperationCanceledException oe)
-					{
-						if (_exceptionHandler is not null)
-						{
-							await _exceptionHandler.Handle(oe);
-						}
-						else
-						{
-							throw;
-						}
-						consumer.Close();
-						break;
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				if (_exceptionHandler is not null)
-				{
-					await _exceptionHandler.Handle(e);
-				}
-				else
-				{
-					throw;
-				}
+				throw;
 			}
 			finally
 			{
 				consumer.Close();
-			}
-		}
-
-		private async Task HandleResult(bool result, string schemaName)
-		{
-			if (!result)
-			{
-				var exception = new Exception($"Failed while handling topic of type {schemaName}");
-				if (_exceptionHandler is not null)
-				{
-					await _exceptionHandler.Handle(exception);
-				}
-				else
-				{
-					throw exception;
-				}
 			}
 		}
 	}

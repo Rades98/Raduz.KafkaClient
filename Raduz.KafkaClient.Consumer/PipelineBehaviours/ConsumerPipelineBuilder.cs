@@ -5,25 +5,25 @@ namespace Raduz.KafkaClient.Consumer
 {
 	internal class ConsumerPipelineBuilder : IConsumerPipelineBuilder
 	{
-		List<Func<HandlerDelegate, Task<bool>>> _pipelineSteps = new();
+		List<Func<HandlerDelegate, Task>> _pipelineSteps = new();
 		BlockingCollection<HandlerDelegate>[]? _buffers;
 		CancellationTokenSource _ctSource;
 
-		public event Action<bool> Finished = delegate { };
+		public event Action<Task> Finished = delegate { };
 
 		public ConsumerPipelineBuilder()
 		{
 			_ctSource = new CancellationTokenSource();
 		}
 
-		public void AddStep(IConsumerPipelineBehaviour behaviour, ISpecificRecord data)
+		public void AddStep(IConsumerPipelineBehaviour behaviour, ISpecificRecord data, string topicName)
 		{
-			_pipelineSteps.Add(input => behaviour.Handle(input, data, _ctSource.Token));
+			_pipelineSteps.Add(input => behaviour.Handle(input, data, topicName, _ctSource.Token));
 		}
 
-		public void AddSteps(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours, ISpecificRecord data)
+		public void AddSteps(IEnumerable<IConsumerPipelineBehaviour> pipelineBehaviours, ISpecificRecord data, string topicName)
 		{
-			pipelineBehaviours.ToList().ForEach(behaviour => _pipelineSteps.Add(input => behaviour.Handle(input, data, _ctSource.Token)));
+			pipelineBehaviours.ToList().ForEach(behaviour => _pipelineSteps.Add(input => behaviour.Handle(input, data, topicName, _ctSource.Token)));
 		}
 
 		public void Execute(HandlerDelegate input)
@@ -52,7 +52,7 @@ namespace Raduz.KafkaClient.Consumer
 							bool isLastStep = bufferIndexLocal == _pipelineSteps.Count - 1;
 							if (isLastStep)
 							{
-								Finished?.Invoke(await output);
+								Finished?.Invoke(output);
 							}
 							else
 							{

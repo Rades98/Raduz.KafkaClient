@@ -38,6 +38,9 @@
 		}
 	}
 
+	In base class is injected IConsumerManager which is singleton managing pause/resume actions for soncumer,
+	so if there is error with your DB f.e. you can pause consuming of all topics
+
 3) Implement Exception handlers
 	
 	For Publisher implement IPublisherExceptionHandler 
