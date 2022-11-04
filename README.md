@@ -5,6 +5,9 @@ Easy to use kafka .net6 client.
 + publishing and consuming AVRO schema based topics easilly with mediator request and handlers
 + some logs of operations and their state
 
+
+# For more specific info chceck [this project's wiki](https://github.com/Rades98/Raduz.KafkaClient/wiki)
+
 # How to use
 You can download packages from [here](https://github.com/Rades98?tab=packages) 
 Or just install from nuget.org:
@@ -18,8 +21,6 @@ Or just install from nuget.org:
   - Can be used as microsoft "Abstractions" packages in projects,</br> where is no need to include whole package, </br> but you need contracts for building requests or some pipelines etc.
 + NuGet\Install-Package Raduz.KafkaClient.Publisher
   - Can be used as solo publisher
-
-For more specific info chceck [this project's wiki](https://github.com/Rades98/Raduz.KafkaClient/wiki)
 
 ## AVRO object creation
 How to create AVROModel you can read [here](https://engineering.chrobinson.com/dotnet-avro/guides/cli-generate/)
