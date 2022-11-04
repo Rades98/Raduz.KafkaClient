@@ -22,7 +22,8 @@ namespace Raduz.KafkaClient.Consumer
 		{
 			services.Configure<KafkaClientConsumerConfig>(configuration.GetSection(nameof(KafkaClientConsumerConfig)));
 			services.Configure<SchemaRegistryConfig>(configuration.GetSection(nameof(SchemaRegistryConfig)));
-			services.AddHostedService<ConsumingService>();
+			services.AddScoped<IConsumingService, ConsumingService>();
+			services.AddHostedService<ConsumerServiceWrappingService>();
 
 			assembly.GetTypes().Where(type =>
 				type.BaseType is not null &&
@@ -41,11 +42,12 @@ namespace Raduz.KafkaClient.Consumer
 				services.AddScoped(typeof(IConsumerExceptionHandler), errorHandler);
 			}
 
-			var pipelineBehaviours = assembly.GetTypes().FirstOrDefault(type => type.GetInterfaces().Contains(typeof(IConsumerPipelineBehaviour)));
-			if (pipelineBehaviours is not null)
-			{
-				services.AddScoped(typeof(IConsumerPipelineBehaviour), pipelineBehaviours);
-			}
+			assembly.GetTypes()
+				.Where(type => type.GetInterfaces().Contains(typeof(IConsumerPipelineBehaviour)))
+				.ToList()
+				.ForEach(pipeline => services.AddScoped(typeof(IConsumerPipelineBehaviour), pipeline));
+
+			services.AddSingleton<IConsumerManager,ConsumerManager>();
 
 			return services;
 		}

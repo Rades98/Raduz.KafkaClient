@@ -4,6 +4,6 @@ namespace Raduz.KafkaClient.Consumer
 {
 	public interface IConsumerPipelineBehaviour
 	{
-		Task<bool> Handle(HandlerDelegate next, ISpecificRecord data, CancellationToken ct);
+		Task Handle(HandlerDelegate next, ISpecificRecord data, string topicName, CancellationToken ct);
 	}
 }
