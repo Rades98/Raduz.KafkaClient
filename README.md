@@ -9,8 +9,7 @@ Easy to use kafka .net6 client.
 
 ## For more specific info about usage chceck [this project's wiki](https://github.com/Rades98/Raduz.KafkaClient/wiki)
 
-You can download packages from [here](https://github.com/Rades98?tab=packages) 
-Or just install from nuget.org:
+You can download packages from nuget.org:
 + NuGet\Install-Package Raduz.KafkaClient.Client
   - Universall with all of bellow
 + NuGet\Install-Package Raduz.KafkaClient.Common
