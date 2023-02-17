@@ -3,7 +3,9 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Confluent.SchemaRegistry;
 using Confluent.SchemaRegistry.Serdes;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Raduz.KafkaClient.Contracts.Configuration;
 using Raduz.KafkaClient.Contracts.Publisher;
 
@@ -14,15 +16,20 @@ namespace Raduz.KafkaClient.Publisher
 		private readonly KafkaClientProducerConfig _producerConfig;
 		private readonly SchemaRegistryConfig _schemaRegistryConfig;
 		private readonly IPublisherExceptionHandler? _exceptionHandler;
+		private readonly IMemoryCache _memoryCache;
+
+		static readonly object _lock = new object();
+		private static readonly TimeSpan defaultExpiration = TimeSpan.FromSeconds(60);
 
 		public KafkaPublisher(
 			IOptions<KafkaClientProducerConfig> producerConfig,
 			IOptions<SchemaRegistryConfig> schemaRegistryConfig,
+			IMemoryCache memoryCache,
 			IPublisherExceptionHandler? exceptionHandler = null)
 		{
 			_producerConfig = producerConfig?.Value ?? throw new ArgumentNullException(nameof(producerConfig));
 			_schemaRegistryConfig = schemaRegistryConfig.Value ?? throw new ArgumentNullException(nameof(schemaRegistryConfig));
-
+			_memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
 			_exceptionHandler = exceptionHandler;
 		}
 
@@ -30,13 +37,7 @@ namespace Raduz.KafkaClient.Publisher
 		public async Task PublishAsync<T>(string topicName, string key, T data, CancellationToken ct)
 			where T : class, ISpecificRecord
 		{
-			using var schemaRegistry = new CachedSchemaRegistryClient(_schemaRegistryConfig);
-			using var producer = new ProducerBuilder<string, T>(_producerConfig)
-				.SetValueSerializer(new AvroSerializer<T>(schemaRegistry, new AvroSerializerConfig()
-				{
-					BufferBytes = 100,
-				}))
-				.Build();
+			var producer = GetProducer<T>();
 			try
 			{
 				if (_producerConfig.AllowCreateTopic)
@@ -100,6 +101,72 @@ namespace Raduz.KafkaClient.Publisher
 
 				}
 			}
+		}
+
+		private IProducer<string, T> GetProducer<T>()
+		{
+			var producer = _memoryCache.Get(nameof(T)) as IProducer<string, T>;
+
+			if (producer is not null)
+			{
+				return producer;
+			}
+
+			lock (_lock)
+			{
+				if (producer is not null)
+				{
+					return producer;
+				}
+
+				var tempProducer = CreateNewProducer<T>();
+
+				_memoryCache.Set(nameof(T), tempProducer, GetOptions<T>(tempProducer, _producerConfig.MessageTimeoutMs ?? 1000));
+
+				producer = tempProducer;
+			}
+
+			return producer;
+		}
+
+		private IProducer<string, T> CreateNewProducer<T>()
+			 => new ProducerBuilder<string, T>(_producerConfig)
+					.SetValueSerializer(new AvroSerializer<T>(new CachedSchemaRegistryClient(_schemaRegistryConfig), new AvroSerializerConfig()
+					{
+						BufferBytes = 100,
+					}))
+					.Build();
+
+		internal static MemoryCacheEntryOptions GetOptions<T>(IProducer<string, T> producer, int messageTimeoutMs)
+		{
+			var tokenRegistration = new CancellationTokenSource();
+			tokenRegistration.CancelAfter(defaultExpiration);
+
+			var producerFlushToken = new CancellationTokenSource();
+
+			var cachePreremovalToken = new CancellationChangeToken(tokenRegistration.Token);
+			cachePreremovalToken.RegisterChangeCallback(obj =>
+			{
+				if (obj is IProducer<string, T> producer)
+				{
+					producer.Flush();
+					producerFlushToken.CancelAfter(messageTimeoutMs);
+				}
+			}, producer);
+
+			var opt = new MemoryCacheEntryOptions();
+			opt.AddExpirationToken(cachePreremovalToken);
+
+			var cacheExpirationToken = new CancellationChangeToken(producerFlushToken.Token);
+			cacheExpirationToken.RegisterChangeCallback(obj =>
+			{
+				if (obj is IProducer<string, T> producer)
+				{
+					producer.Dispose();
+				}
+			}, producer);
+
+			return opt;
 		}
 	}
 }

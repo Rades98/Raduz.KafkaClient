@@ -62,20 +62,42 @@ namespace Raduz.KafkaClient.Consumer
 			}
 		}
 
-		public async Task DoWork(CancellationToken stoppingToken)
+		public Task DoWork(CancellationToken stoppingToken)
 		{
-			//separatni thread
-			int retries = 0;
-			ConsumeResult<string, ISpecificRecord>? consumeResult = null;
-
 			using var schemaRegistry = new CachedSchemaRegistryClient(_schemaRegistryConfig);
-			using var consumer = new ConsumerBuilder<string, ISpecificRecord>(_consumerConfig)
+
+			var taskList = new List<Task>();
+
+			foreach(string topicName in _handlers.GroupBy(handler => handler.TopicName).Select(grp => grp.First().TopicName))
+			{
+				using var consumer = new ConsumerBuilder<string, ISpecificRecord>(_consumerConfig)
 				.SetValueDeserializer(new MultiSchemaAvroDeserializer(schemaRegistry).AsSyncOverAsync())
 				.Build();
 
+				taskList.Add(Task.Run(async () =>
+				{
+					await Consume(consumer, topicName);
+				}, stoppingToken));
+			}
+
+			Task.WaitAll(taskList.ToArray(), stoppingToken);
+
+			return Task.CompletedTask;
+		}
+
+		private async Task Consume(IConsumer<string, ISpecificRecord>? consumer, string topicName)
+		{
+			if (consumer is null)
+			{
+				throw new ArgumentNullException(nameof(consumer));
+			}
+
+			int retries = 0;
+			ConsumeResult<string, ISpecificRecord>? consumeResult = null;
+
 			try
 			{
-				consumer.Subscribe(_handlers.GroupBy(handler => handler.TopicName).Select(grp => grp.First().TopicName));
+				consumer.Subscribe(topicName);
 
 				var cancellationToken = _consumerCancellationTokenSource.Token;
 
@@ -87,7 +109,6 @@ namespace Raduz.KafkaClient.Consumer
 						{
 							consumeResult = consumer.Consume(cancellationToken);
 							string schemaName = consumeResult.Message.Value.Schema.Name;
-							string topicName = consumeResult.Topic;
 
 							if (_handlers.Any(handler => handler.Schema == schemaName && handler.TopicName == topicName))
 							{
@@ -170,7 +191,7 @@ namespace Raduz.KafkaClient.Consumer
 					}
 				}
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
 				throw;
 			}
