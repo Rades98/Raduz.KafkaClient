@@ -9,14 +9,14 @@
     <RepositoryUrl>https://github.com/Rades98/Raduz.KafkaClient</RepositoryUrl>
     <Description>Easy to use Kafka client using AVRO schema</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>4.0.2</Version>
+    <Version>4.0.3</Version>
     <Authors>Raduz</Authors>
     <Company>Raduz inc</Company>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\..\..\Desktop\logo.png">
+    <None Include="..\logo.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
